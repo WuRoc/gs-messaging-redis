@@ -19,13 +19,26 @@ public class MessagingRedisApplication {
 
 	@Bean
 	RedisMessageListenerContainer container(RedisConnectionFactory connectionFactory,
-			MessageListenerAdapter listenerAdapter) {
+	                                        MessageListenerAdapter listenerAdapter) {
 
 		RedisMessageListenerContainer container = new RedisMessageListenerContainer();
 		container.setConnectionFactory(connectionFactory);
-		container.addMessageListener(listenerAdapter, new PatternTopic("chat"));
+		container.addMessageListener(listenerAdapter, new PatternTopic("chat2"));
+		container.addMessageListener(listenerAdapter, new PatternTopic("chat3"));
 
 		return container;
+	}
+
+	@Bean
+	RedisMessageListenerContainer containers(RedisConnectionFactory connectionFactory,
+	                                        MessageListenerAdapter listenerAdapters) {
+
+		RedisMessageListenerContainer containers = new RedisMessageListenerContainer();
+		containers.setConnectionFactory(connectionFactory);
+		containers.addMessageListener(listenerAdapters, new PatternTopic("chat2"));
+		containers.addMessageListener(listenerAdapters, new PatternTopic("chat3"));
+
+		return containers;
 	}
 
 	@Bean
@@ -34,8 +47,18 @@ public class MessagingRedisApplication {
 	}
 
 	@Bean
+	MessageListenerAdapter listenerAdapters(Receivers receivers) {
+		return new MessageListenerAdapter(receivers, "receiveMessage");
+	}
+	
+	@Bean
 	Receiver receiver() {
 		return new Receiver();
+	}
+
+	@Bean
+	Receivers receivers() {
+		return new Receivers();
 	}
 
 	@Bean
@@ -49,11 +72,14 @@ public class MessagingRedisApplication {
 
 		StringRedisTemplate template = ctx.getBean(StringRedisTemplate.class);
 		Receiver receiver = ctx.getBean(Receiver.class);
+		Receivers receivers = ctx.getBean(Receivers.class);
 
 		while (receiver.getCount() == 0) {
 
 			LOGGER.info("Sending message...");
 			template.convertAndSend("chat", "Hello from Redis!");
+			template.convertAndSend("chat2", "Hello from Redis!");
+			template.convertAndSend("chat3", "Hello from Redis!");
 			Thread.sleep(500L);
 		}
 
